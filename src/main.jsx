@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState}from'react';
 import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import'./styles.css';
-import{money,operationalDate,calculateTotal,matchesHistory,receiptText,snapshotItems}from'./core.js';
+import{money,operationalDate,calculateTotal,matchesHistory,receiptText,snapshotItems}from'./core.js';import{transactionRow,itemRows,markSynced}from'./sync-core.js';
 
 const DB='nota-warungku',STORE='app';
 const DEFAULT=[{id:'m1',category:'Makanan',name:'Nasi Pecel',price:10000,active:true},{id:'m2',category:'Makanan',name:'Nasi Goreng',price:12000,active:true},{id:'m3',category:'Lauk',name:'Telur',price:4000,active:true},{id:'m4',category:'Lauk',name:'Tempe',price:2000,active:true},{id:'m5',category:'Minuman',name:'Teh',price:3000,active:true},{id:'m6',category:'Minuman',name:'Kopi',price:4000,active:true}];
@@ -18,15 +18,13 @@ async function syncPending(history,setHistory,setNotice){
  if(!session)return{ok:false,reason:'Sesi sinkronisasi belum tersedia. Gunakan PULIHKAN DATA setelah akun recovery disiapkan.'};
  const pending=history.filter(t=>t.status!=='SYNCED');
  for(const tx of pending){
-  const{error}=await supabase.from('nota_warungku_transactions').upsert({id:tx.id,owner_id:session.user.id,receipt_no:tx.number,operational_date:`20${operationalDate(tx.createdAt).slice(0,2)}-${operationalDate(tx.createdAt).slice(2,4)}-${operationalDate(tx.createdAt).slice(4,6)}`,created_at:tx.createdAt,total:tx.total,status:'SYNCED',updated_at:new Date().toISOString()},{onConflict:'id'});
+  const{error}=await supabase.from('nota_warungku_transactions').upsert(transactionRow(tx,session.user.id),{onConflict:'id'});
   if(error)return{ok:false,reason:error.message};
-  const rows=tx.items.map((i,n)=>({transaction_id:tx.id,owner_id:session.user.id,menu_id:i.id,client_item_id:i.itemId||`${tx.id}-${n}`,menu_name:i.name,unit_price:i.price,quantity:i.qty,subtotal:i.subtotal}));
-  const{error:itemError}=await supabase.from('nota_warungku_transaction_items').upsert(rows,{onConflict:'transaction_id,client_item_id'});
+  const{error:itemError}=await supabase.from('nota_warungku_transaction_items').upsert(itemRows(tx,session.user.id),{onConflict:'transaction_id,client_item_id'});
   if(itemError)return{ok:false,reason:itemError.message};
  }
- const next=history.map(t=>pending.some(p=>p.id===t.id)?{...t,status:'SYNCED'}:t);await put('history',next);setHistory(next);setNotice(`${pending.length} nota berhasil disinkronkan.`);return{ok:true,count:pending.length};
+ const next=markSynced(history,pending.map(t=>t.id));await put('history',next);setHistory(next);setNotice(`${pending.length} nota berhasil disinkronkan.`);return{ok:true,count:pending.length};
 }
-
 function MenuButton({menu,qty,onAdd,onLongStart,onLongStop}){const long=useRef(false);return <button className="menu" onClick={()=>{if(long.current){long.current=false;return}onAdd()}} onPointerDown={()=>{long.current=false;onLongStart(()=>{long.current=true})}} onPointerUp={onLongStop} onPointerCancel={onLongStop} onPointerLeave={onLongStop}><b>{menu.name}</b><span>{money(menu.price)}</span>{qty>0&&<em>{qty}</em>}</button>}
 
 function App(){
