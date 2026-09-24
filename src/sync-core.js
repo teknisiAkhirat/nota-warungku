@@ -1,0 +1,4 @@
+export function transactionRow(tx,ownerId){return{id:tx.id,owner_id:ownerId,receipt_no:tx.number,operational_date:`20${tx.number.slice(0,2)}-${tx.number.slice(2,4)}-${tx.number.slice(4,6)}`,created_at:tx.createdAt,total:tx.total,status:'SYNCED',updated_at:new Date().toISOString()}}
+export function itemRows(tx,ownerId){return tx.items.map((item,index)=>({transaction_id:tx.id,owner_id:ownerId,menu_id:item.id,client_item_id:item.itemId||`${tx.id}-${index}`,menu_name:item.name,unit_price:item.price,quantity:item.qty,subtotal:item.subtotal}))}
+export function markSynced(history,ids){const set=new Set(ids);return history.map(tx=>set.has(tx.id)?{...tx,status:'SYNCED'}:tx)}
+export function pendingTransactions(history){return history.filter(tx=>tx.status!=='SYNCED')}
