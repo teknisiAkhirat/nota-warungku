@@ -6,19 +6,43 @@ Aplikasi nota sederhana, offline-first, untuk Warung Bu Sukarni.
 
 - Frontend: React + Vite + PWA
 - Primary transaction storage: IndexedDB on the Android device
-- Backup/recovery target: Supabase/Postgres
-- Hosting target: Vercel
+- Backup/recovery target: Supabase/Postgres project `mubarok-gadget-hub`
+- Hosting target: Cloudflare Pages
 - WhatsApp: Android Share / plain-text receipt
 
-## Supabase
+## Offline-first behavior
 
-Because a new Supabase project is not available on this account, this application uses the existing Supabase project `mubarok-gadget-hub`.
+Transaksi dibuat dan disimpan di IndexedDB terlebih dahulu. Setiap transaksi final mendapat nomor `YYMMDDNNN` berdasarkan operational day Asia/Jakarta (05:00–04:59).
 
-**Isolation rule:** Nota Warungku uses only tables prefixed `nota_warungku_`. Existing Mubarok tables are not modified.
+Status lokal:
+- `PENDING_SYNC` — belum berhasil dibackup
+- `SYNCED` — backup Supabase berhasil
 
-The database migration is recorded in `supabase/migrations/20260924_nota_warungku_initial_schema.sql`.
+Sync menggunakan upsert dengan transaction ID dan client item ID yang stabil sehingga retry tidak membuat duplicate transaction.
 
-RLS is enabled and scoped to `auth.uid()`. Therefore the production sync layer must authenticate a user/session before reading or writing cloud backup data. The frontend must never contain a service-role key.
+## Recovery
+
+Operator tidak perlu login.
+
+Saat instalasi pertama, aplikasi membuat **kode pemulihan warung** acak dan menyimpannya di IndexedDB. Kode tersebut harus disimpan oleh pemilik/operator. Kode dipakai sebagai bearer credential untuk backup dan pemulihan pada perangkat baru.
+
+Server hanya menyimpan SHA-256 dari kode melalui RLS; kode plaintext tidak pernah disimpan di database.
+
+Perangkat baru dapat memilih **PULIHKAN DATA**, memasukkan kode pemulihan, lalu mengambil snapshot transaksi dari Supabase. Jika kode hilang, data cloud tidak dapat dipulihkan melalui aplikasi.
+
+## Supabase security boundary
+
+Nota Warungku menggunakan hanya project Supabase:
+
+`mubarok-gadget-hub`
+
+Frontend hanya memakai `VITE_SUPABASE_URL` dan `VITE_SUPABASE_PUBLISHABLE_KEY`. Service-role/secret key tidak boleh masuk browser atau repository.
+
+RLS hanya membuka tabel `nota_warungku_*` kepada request dengan recovery-key hash yang cocok. Tabel Mubarok lain tidak menjadi bagian dari aplikasi ini.
+
+## PWA
+
+Vite PWA menghasilkan manifest, service worker, dan precache asset. Data transaksi tetap berada di IndexedDB sehingga refresh/reopen tidak menghapus draft atau history.
 
 ## Development
 
@@ -34,4 +58,4 @@ npm run dev
 
 **NO EVIDENCE, NO DONE.**
 
-A feature is only considered complete after implementation, automated tests, and behavioral verification on the target Android device where applicable.
+Feature completion requires implementation, automated verification, and behavioral verification on the target Android device where applicable.
