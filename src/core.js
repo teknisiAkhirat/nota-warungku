@@ -11,5 +11,5 @@ export function money(n){return new Intl.NumberFormat('id-ID',{style:'currency',
 export function calculateTotal(items){return items.reduce((sum,item)=>sum+(item.price*item.qty),0)}
 export function snapshotItems(items){return items.map(({id,name,category,price,qty})=>({id,name,category,price,qty,subtotal:price*qty}))}
 export function receiptText(t){return ['WARUNG BU SUKARNI','Nota '+t.number,new Date(t.createdAt).toLocaleString('id-ID'),' ',...t.items.map(i=>`${i.name} x${i.qty} @ ${money(i.price)} = ${money(i.subtotal)}`),' ','TOTAL '+money(t.total),' ','Terima kasih telah berbelanja di Warung Bu Sukarni.'].join('\n')}
-export function matchesHistory(t,q){q=q.trim().toLowerCase();if(!q)return true;const date=new Date(t.createdAt).toLocaleDateString('id-ID');return t.number.toLowerCase().includes(q)||date.includes(q)||t.items.some(i=>i.name.toLowerCase().includes(q))}
+export function matchesHistory(t,q){q=q.trim().toLowerCase();if(!q)return true;const d=new Date(t.createdAt),date=d.toLocaleDateString('id-ID'),iso=d.toISOString().slice(0,10),compact=iso.split('-').reverse().join('/');return t.number.toLowerCase().includes(q)||date.includes(q)||iso.includes(q)||compact.includes(q)||t.items.some(i=>i.name.toLowerCase().includes(q))}
 export function canSend(online){return Boolean(online)}
