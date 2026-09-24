@@ -4,3 +4,4 @@ test('sync row uses stable transaction id for idempotent upsert',()=>assert.equa
 test('item rows use stable client item ids',()=>assert.deepEqual(itemRows(tx,'hash').map(x=>x.client_item_id),['item-1','item-2']));
 test('pending queue excludes synced transactions',()=>assert.equal(pendingTransactions([tx,{...tx,id:'tx-2',status:'SYNCED'}]).length,1));
 test('markSynced is idempotent',()=>{const once=markSynced([tx],'tx-1');const twice=markSynced(once,'tx-1');assert.deepEqual(twice,once);assert.equal(twice[0].status,'SYNCED')});
+test('recovery key hashing is deterministic and non-plaintext',async()=>{const {hashKey}=await import('../src/sync-core.js');const a=await hashKey('ABC123');const b=await hashKey('ABC123');assert.equal(a,b);assert.notEqual(a,'ABC123');assert.equal(a.length,64)});
