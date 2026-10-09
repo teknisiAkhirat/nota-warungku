@@ -6,7 +6,7 @@ Aplikasi nota sederhana, offline-first, untuk Warung Bu Sukarni.
 
 - Frontend: React + Vite + PWA
 - Primary transaction storage: IndexedDB on the Android device
-- Backup/recovery target: Supabase/Postgres project `mubarok-gadget-hub`
+- Backup/recovery target: Supabase/Postgres project `pukis-heru` (project ref: `mswaixmuwcqtyotvptew`)
 - Hosting target: Cloudflare Pages
 - WhatsApp: Android Share / plain-text receipt
 
@@ -32,13 +32,22 @@ Perangkat baru dapat memilih **PULIHKAN DATA**, memasukkan kode pemulihan, lalu 
 
 ## Supabase security boundary
 
-Nota Warungku menggunakan hanya project Supabase:
-
-`mubarok-gadget-hub`
+Nota Warungku menggunakan hanya project Supabase `pukis-heru` (`mswaixmuwcqtyotvptew`).
 
 Frontend hanya memakai `VITE_SUPABASE_URL` dan `VITE_SUPABASE_PUBLISHABLE_KEY`. Service-role/secret key tidak boleh masuk browser atau repository.
 
-RLS hanya membuka tabel `nota_warungku_*` kepada request dengan recovery-key hash yang cocok. Tabel Mubarok lain tidak menjadi bagian dari aplikasi ini.
+RLS hanya membuka tabel `nota_warungku_*` kepada request dengan recovery-key hash yang cocok. Tabel lain dalam proyek Supabase ini tidak menjadi bagian dari aplikasi Nota Warungku.
+
+## Configuration
+
+Set the following variables in local `.env` and in Cloudflare Pages → Settings → Environment variables:
+
+- `VITE_SUPABASE_URL=https://mswaixmuwcqtyotvptew.supabase.co`
+- `VITE_SUPABASE_PUBLISHABLE_KEY` = the publishable key from the `pukis-heru` Supabase project.
+
+Use only the publishable/anon key in the browser. Never use a service-role or secret key in Vite variables.
+
+After changing Cloudflare Pages environment variables, trigger a new deployment so Vite bakes the values into the frontend build.
 
 ## PWA
 
