@@ -46,7 +46,7 @@ async function syncMenuCatalog(recoveryKey,localMenus){
  let{data:categories,error:categoryError}=await client.from('nota_warungku_categories').select('id,name,sort_order,is_active');
  if(categoryError)throw categoryError;categories=categories||[];
  const categoryByName=new Map(categories.map(c=>[normalizeCatalogName(c.name),c]));
- for(const[name,index]of categoryNames(localMenus).entries()){
+ for(const[index,name]of categoryNames(localMenus).entries()){
   const normalized=normalizeCatalogName(name);if(categoryByName.has(normalized))continue;
   const{data:created,error}=await client.from('nota_warungku_categories').insert({id:crypto.randomUUID(),owner_key_hash:ownerKeyHash,name,sort_order:index,is_active:true}).select('id,name,sort_order,is_active').single();
   if(error)throw error;categories.push(created);categoryByName.set(normalized,created);
