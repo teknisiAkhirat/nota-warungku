@@ -2,7 +2,7 @@ import React,{useEffect,useMemo,useRef,useState}from'react';
 import{createRoot}from'react-dom/client';
 import{createClient}from'@supabase/supabase-js';
 import'./styles.css';
-import{money,operationalDate,calculateTotal,matchesHistory,receiptText,snapshotItems}from'./core.js';import{transactionRow,itemRows,markSynced,hashKey,mergeRecoveredHistory}from'./sync-core.js';import{categoryNames,catalogFromCloud,findCloudMenu,normalizeCatalogName}from'./menu-sync-core.js';
+import{money,operationalDate,calculateTotal,matchesHistory,receiptText,snapshotItems}from'./core.js';import{transactionRow,itemRows,markSynced,hashKey,mergeRecoveredHistory}from'./sync-core.js';import{categoryNames,orderedCategoryNames,catalogFromCloud,findCloudMenu,normalizeCatalogName}from'./menu-sync-core.js';
 
 const DB='nota-warungku',STORE='app';
 const DEFAULT=[{id:'m1',category:'Makanan',name:'Nasi Pecel',price:10000,active:true},{id:'m2',category:'Makanan',name:'Nasi Goreng',price:12000,active:true},{id:'m3',category:'Makanan',name:'Nasi rawon',price:12000,active:true},{id:'m4',category:'Makanan',name:'Nasi lodeh',price:5000,active:true},{id:'m5',category:'Makanan',name:'Nasi asem-asem',price:10000,active:true},{id:'m6',category:'Makanan',name:'Nasi soto',price:8000,active:true},{id:'m7',category:'Makanan',name:'Nasi rames',price:5000,active:true},{id:'m8',category:'Makanan',name:'Nasi campur',price:5000,active:true},{id:'m9',category:'Lauk',name:'Telur',price:4000,active:true},{id:'m10',category:'Lauk',name:'Tempe',price:1000,active:true},{id:'m11',category:'Lauk',name:'Telur asin',price:5000,active:true},{id:'m12',category:'Lauk',name:'Sate ayam',price:2500,active:true},{id:'m13',category:'Lauk',name:'Sate puyuh',price:4000,active:true},{id:'m14',category:'Lauk',name:'Sate ati ampela',price:3000,active:true},{id:'m15',category:'Minuman',name:'Teh',price:3000,active:true},{id:'m16',category:'Minuman',name:'Kopi',price:4000,active:true},{id:'m17',category:'Minuman',name:'Jeruk',price:5000,active:true}];
@@ -46,9 +46,9 @@ async function syncMenuCatalog(recoveryKey,localMenus){
  let{data:categories,error:categoryError}=await client.from('nota_warungku_categories').select('id,name,sort_order,is_active');
  if(categoryError)throw categoryError;categories=categories||[];
  const categoryByName=new Map(categories.map(c=>[normalizeCatalogName(c.name),c]));
- for(const[index,name]of categoryNames(localMenus).entries()){
+ for(const{name,sort_order}of orderedCategoryNames(localMenus)){
   const normalized=normalizeCatalogName(name);if(categoryByName.has(normalized))continue;
-  const{data:created,error}=await client.from('nota_warungku_categories').insert({id:crypto.randomUUID(),owner_key_hash:ownerKeyHash,name,sort_order:index,is_active:true}).select('id,name,sort_order,is_active').single();
+  const{data:created,error}=await client.from('nota_warungku_categories').insert({id:crypto.randomUUID(),owner_key_hash:ownerKeyHash,name,sort_order,is_active:true}).select('id,name,sort_order,is_active').single();
   if(error)throw error;categories.push(created);categoryByName.set(normalized,created);
  }
  let{data:cloudRows,error:menuError}=await client.from('nota_warungku_menus').select('id,category_id,name,price,sort_order,is_active');
