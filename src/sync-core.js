@@ -1,5 +1,6 @@
 export async function hashKey(key){const bytes=new TextEncoder().encode(key);const digest=await crypto.subtle.digest('SHA-256',bytes);return Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,'0')).join('')}
+const isUuid=value=>typeof value==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 export function transactionRow(tx,ownerKeyHash){return{id:tx.id,owner_key_hash:ownerKeyHash,receipt_no:tx.number,operational_date:`20${tx.number.slice(0,2)}-${tx.number.slice(2,4)}-${tx.number.slice(4,6)}`,created_at:tx.createdAt,total:tx.total,status:'SYNCED',updated_at:new Date().toISOString()}}
-export function itemRows(tx,ownerKeyHash){return tx.items.map((item,index)=>({transaction_id:tx.id,owner_key_hash:ownerKeyHash,menu_id:item.id,client_item_id:item.itemId||`${tx.id}-${index}`,menu_name:item.name,category_name:item.category||'',unit_price:item.price,quantity:item.qty,subtotal:item.subtotal}))}
+export function itemRows(tx,ownerKeyHash){return tx.items.map((item,index)=>({transaction_id:tx.id,owner_key_hash:ownerKeyHash,client_item_id:item.itemId||`${tx.id}-${index}`,menu_id:isUuid(item.id)?item.id:null,menu_name:item.name,category_name:item.category||'',unit_price:item.price,quantity:item.qty,subtotal:item.subtotal}))}
 export function markSynced(history,ids){const set=new Set(Array.isArray(ids)?ids:[ids]);return history.map(tx=>set.has(tx.id)?{...tx,status:'SYNCED'}:tx)}
 export function pendingTransactions(history){return history.filter(tx=>tx.status!=='SYNCED')}
