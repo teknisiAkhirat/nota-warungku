@@ -4,3 +4,4 @@ export function transactionRow(tx,ownerKeyHash){return{id:tx.id,owner_key_hash:o
 export function itemRows(tx,ownerKeyHash){return tx.items.map((item,index)=>({transaction_id:tx.id,owner_key_hash:ownerKeyHash,client_item_id:item.itemId||`${tx.id}-${index}`,menu_id:isUuid(item.id)?item.id:null,menu_name:item.name,category_name:item.category||'',unit_price:item.price,quantity:item.qty,subtotal:item.subtotal}))}
 export function markSynced(history,ids){const set=new Set(Array.isArray(ids)?ids:[ids]);return history.map(tx=>set.has(tx.id)?{...tx,status:'SYNCED'}:tx)}
 export function pendingTransactions(history){return history.filter(tx=>tx.status!=='SYNCED')}
+export function mergeRecoveredHistory(localHistory,cloudHistory){const cloudIds=new Set(cloudHistory.map(tx=>tx.id));return [...cloudHistory,...localHistory.filter(tx=>!cloudIds.has(tx.id))]}
