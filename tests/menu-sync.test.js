@@ -1,4 +1,4 @@
-import test from'node:test';import assert from'node:assert/strict';import{normalizeCatalogName,categoryNames,catalogFromCloud,findCloudMenu}from'../src/menu-sync-core.js';
+import test from'node:test';import assert from'node:assert/strict';import{normalizeCatalogName,categoryNames,catalogFromCloud,findCloudMenu,orderedCategoryNames}from'../src/menu-sync-core.js';
 test('catalog names ignore case and surrounding whitespace',()=>assert.equal(normalizeCatalogName('  Nasi Soto  '),'nasi soto'));
 test('category list is unique after trimming',()=>assert.deepEqual(categoryNames([{category:'Makanan'},{category:' Makanan '},{category:'Minuman'},{category:''}]),['Makanan','Minuman']));
 test('cloud rows become local menu records with category names',()=>assert.deepEqual(catalogFromCloud([{id:'cat-1',name:'Makanan'}],[{id:'menu-1',category_id:'cat-1',name:'Nasi Soto',price:'15000',is_active:true},{id:'menu-2',category_id:'missing',name:'Teh',price:3000,is_active:false}]),[{id:'menu-1',category:'Makanan',name:'Nasi Soto',price:15000,active:true},{id:'menu-2',category:'Lainnya',name:'Teh',price:3000,active:false}]));
