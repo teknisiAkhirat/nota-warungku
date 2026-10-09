@@ -1,0 +1,6 @@
+import test from'node:test';import assert from'node:assert/strict';import{normalizeCatalogName,categoryNames,catalogFromCloud,findCloudMenu}from'../src/menu-sync-core.js';
+test('catalog names ignore case and surrounding whitespace',()=>assert.equal(normalizeCatalogName('  Nasi Soto  '),'nasi soto'));
+test('category list is unique after trimming',()=>assert.deepEqual(categoryNames([{category:'Makanan'},{category:' Makanan '},{category:'Minuman'},{category:''}]),['Makanan','Minuman']));
+test('cloud rows become local menu records with category names',()=>assert.deepEqual(catalogFromCloud([{id:'cat-1',name:'Makanan'}],[{id:'menu-1',category_id:'cat-1',name:'Nasi Soto',price:'15000',is_active:true},{id:'menu-2',category_id:'missing',name:'Teh',price:3000,is_active:false}]),[{id:'menu-1',category:'Makanan',name:'Nasi Soto',price:15000,active:true},{id:'menu-2',category:'Lainnya',name:'Teh',price:3000,active:false}]));
+test('existing cloud menu is matched by stable ID first',()=>{const rows=[{id:'menu-1',category_id:'cat-1',name:'Nama lama'}];assert.equal(findCloudMenu({id:'menu-1',name:'Nama baru'},rows,'cat-1'),rows[0])});
+test('local menu without cloud ID matches normalized category and name',()=>{const rows=[{id:'menu-1',category_id:'cat-1',name:'Nasi Soto'}];assert.equal(findCloudMenu({id:'m-local',name:' nasi soto '},rows,'cat-1'),rows[0])});
